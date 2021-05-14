@@ -16,6 +16,7 @@ typedef struct File {
     TTF_Font *font;
     SDL_Texture *text;
     SDL_Rect location;
+    bool isDirectory;
 } File;
 
 void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int offset);
@@ -83,11 +84,13 @@ int main(int argc, char **argv)
                     if (event.button.y >= fileObjects[i].location.y &&
                         event.button.y <= fileObjects[i].location.y + fileObjects[i].location.h)
                     {
-                        currentDir = currentDir + "/" + fileObjects[i].name;
-                        fileObjects.clear();
-                        storeDirectory(currentDir,&fileObjects);
-                        offset = 0;
-                        textRefresh(renderer,&fileObjects, offset);
+                        if (fileObjects[i].isDirectory){
+                            currentDir = currentDir + "/" + fileObjects[i].name;
+                            fileObjects.clear();
+                            storeDirectory(currentDir,&fileObjects);
+                            offset = 0;
+                            textRefresh(renderer,&fileObjects, offset);
+                        }
                     }
 
                 }
@@ -183,8 +186,12 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects)
             }
             else
             {
+                File newFileObject;
+                newFileObject.name = files[i];
                 if (S_ISDIR(file_info.st_mode))
                 {
+                    newFileObject.isDirectory = true;
+
                     //printf("%s (directory)\n",files[i].c_str());
                     /*
                     if (files[i] != "." && files[i] != "..")
@@ -196,12 +203,11 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects)
                 }
                 else
                 {
+                    newFileObject.isDirectory = false;
                     //printf("%s (%ld bytes)\n",files[i].c_str(), file_info.st_size);
                 }
-                File newFileObject;
-                newFileObject.name = files[i];
-                //newFileObject.font = TTF_OpenFont("resrc/OpenSans-Regular.ttf", 24);
                 fileObjects->push_back(newFileObject);
+
                 
             }
             //printf("%s\n", files[i].c_str());
