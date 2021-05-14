@@ -17,6 +17,8 @@ typedef struct File {
     SDL_Texture *text;
     SDL_Rect location;
     bool isDirectory;
+    std::string extension;
+    std::string path;
 } File;
 
 void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int offset);
@@ -121,12 +123,32 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
         SDL_Surface *text_surf = TTF_RenderText_Solid(fileObjects->at(i).font, fileNameChar, color);
         fileObjects->at(i).text = SDL_CreateTextureFromSurface(renderer, text_surf);
         SDL_FreeSurface(text_surf);
-        fileObjects->at(i).location.x = 20;
+        fileObjects->at(i).location.x = 40;
         fileObjects->at(i).location.y = prevY;
         SDL_QueryTexture(fileObjects->at(i).text, NULL, NULL, &(fileObjects->at(i).location.w),&(fileObjects->at(i).location.h));
         prevY = fileObjects->at(i).location.h + prevY;
 
+        
+
+        SDL_Surface *icon_Surface;
+        if (fileObjects->at(i).isDirectory){
+            icon_Surface = IMG_Load("resrc/images/directory.png");
+        }
+        else {
+            icon_Surface = IMG_Load("resrc/images/unknown.png");
+        }
+        SDL_Texture *icon_Texture;
+        icon_Texture = SDL_CreateTextureFromSurface(renderer, icon_Surface);
+        SDL_FreeSurface(icon_Surface);
+        SDL_Rect icon_Location;
+        icon_Location.x = 3;
+        icon_Location.y = fileObjects->at(i).location.y;
+        icon_Location.w = 32;
+        icon_Location.h = 32;
+
         SDL_RenderCopy(renderer, fileObjects->at(i).text, NULL, &(fileObjects->at(i).location));
+        SDL_RenderCopy(renderer, icon_Texture, NULL, &icon_Location);
+
         SDL_RenderPresent(renderer);
 
         //std::cout<<fileObjects[i].name<<std::endl;
