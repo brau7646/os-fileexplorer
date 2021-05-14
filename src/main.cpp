@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     SDL_Event event;
     SDL_WaitEvent(&event);
     std::vector<File> fileObjects;
-    char *currentDir = home;
+    std::string currentDir = home;
     storeDirectory(currentDir,&fileObjects);
     
     //Andy, 16 lines of text can fit into the window (save 2 for up and down arrow)
@@ -83,8 +83,11 @@ int main(int argc, char **argv)
                     if (event.button.y >= fileObjects[i].location.y &&
                         event.button.y <= fileObjects[i].location.y + fileObjects[i].location.h)
                     {
-                        //std::cout<<fileObjects[i].name<<std::endl;
+                        currentDir = currentDir + "/" + fileObjects[i].name;
                         fileObjects.clear();
+                        storeDirectory(currentDir,&fileObjects);
+                        offset = 0;
+                        textRefresh(renderer,&fileObjects, offset);
                     }
 
                 }
