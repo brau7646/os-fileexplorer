@@ -69,7 +69,7 @@ int main(int argc, char **argv)
                     }
                 }
                 else if (event.wheel.y < 0){
-                    if (offset < fileObjects.size() && fileObjects.size() > 16){
+                    if (offset < fileObjects.size()-16 && fileObjects.size() > 16){
                         offset = offset+1;
                         textRefresh(renderer,&fileObjects, offset);
                         
