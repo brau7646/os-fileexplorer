@@ -24,6 +24,7 @@ typedef struct File {
     std::string extension;
     std::string path;
     std::string permission;
+    int filesize;
 } File;
 
 void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int offset);
@@ -163,6 +164,8 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
 
         
 
+
+
         SDL_Surface *icon_Surface;
         if (fileObjects->at(i).isDirectory){
             icon_Surface = IMG_Load("resrc/images/directory.png");
@@ -208,8 +211,40 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
         icon_Location.w = 32;
         icon_Location.h = 32;
 
+        if (!fileObjects->at(i).isDirectory){
+            int filesize = fileObjects->at(i).filesize;
+            std::string filesizeString;
+            if (filesize >= 1024){
+                filesize = filesize / 1024;
+                if (filesize >= 1024){
+                    filesize = filesize / 1024;
+                    if (filesize >= 1024){
+                        filesize = filesize / 1024;
+                        filesizeString = std::to_string(filesize) + " GB";
+                    } else {
+                        filesizeString = std::to_string(filesize) + " MB";
+                    }
+                } else {
+                    filesizeString = std::to_string(filesize) + " KB";
+                }
+            } else {
+                filesizeString = std::to_string(filesize) + " B";
+            }
+            char * fileSizeChar = const_cast<char*>(filesizeString.c_str());
+            SDL_Surface *size_surf = TTF_RenderText_Solid(fileObjects->at(i).font, fileSizeChar, color);
+            SDL_Texture *size_Texture;
+            size_Texture = SDL_CreateTextureFromSurface(renderer, size_surf);
+            SDL_FreeSurface(size_surf);
+            SDL_Rect size_Location;
+            size_Location.x = 700;
+            size_Location.y = fileObjects->at(i).location.y;
+            SDL_QueryTexture(size_Texture, NULL, NULL, &(size_Location.w),&(size_Location.h));
+            SDL_RenderCopy(renderer, size_Texture, NULL, &size_Location);
+        }
+
         SDL_RenderCopy(renderer, fileObjects->at(i).text, NULL, &(fileObjects->at(i).location));
         SDL_RenderCopy(renderer, icon_Texture, NULL, &icon_Location);
+        
 
         SDL_Surface *recur_Surface;
         recur_Surface = IMG_Load("resrc/images/recursive.png");
@@ -293,15 +328,6 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                 if (S_ISDIR(file_info.st_mode))
                 {
                     newFileObject.isDirectory = true;
-                    
-                    //printf("%s (directory)\n",files[i].c_str());
-                    /*
-                    if (files[i] != "." && files[i] != "..")
-                    {
-                        listDirectory(dirname + "/" + files[i]);
-                    }
-                    */
-                    //listDirector(dirname + "/" + files[i]);
                 }
                 else
                 {
@@ -317,10 +343,11 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                         newFileObject.extension = "";
                     }
                     //printf("%s (%ld bytes)\n",files[i].c_str(), file_info.st_size);
+                    newFileObject.filesize = file_info.st_size;
                 }
 
                 for (int i=0; i < level; i++){
-                    newFileObject.name = "     " + newFileObject.name;
+                    newFileObject.name = "    " + newFileObject.name;
                 }
 
                 fileObjects->push_back(newFileObject);
