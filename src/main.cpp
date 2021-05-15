@@ -85,7 +85,10 @@ int main(int argc, char **argv)
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:{
-                if (event.button.y >= 564){
+                if (event.button.y >= 564 &&
+                    event.button.y <= 580 &&
+                    event.button.x >= 392 &&
+                    event.button.x <= 408){
                     if (!expand){
                         fileObjects.clear();
                         storeDirectory(currentDir,&fileObjects,true,0);
@@ -236,7 +239,7 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
             size_Texture = SDL_CreateTextureFromSurface(renderer, size_surf);
             SDL_FreeSurface(size_surf);
             SDL_Rect size_Location;
-            size_Location.x = 725;
+            size_Location.x = 720;
             size_Location.y = fileObjects->at(i).location.y;
             SDL_QueryTexture(size_Texture, NULL, NULL, &(size_Location.w),&(size_Location.h));
             SDL_RenderCopy(renderer, size_Texture, NULL, &size_Location);
@@ -265,7 +268,7 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
         recur_Texture = SDL_CreateTextureFromSurface(renderer, recur_Surface);
         SDL_FreeSurface(recur_Surface);
         SDL_Rect recur_Location;
-        recur_Location.x = 384;
+        recur_Location.x = 392;
         recur_Location.y = 568;
         recur_Location.w = 16;
         recur_Location.h = 16;
