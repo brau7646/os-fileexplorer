@@ -236,10 +236,23 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
             size_Texture = SDL_CreateTextureFromSurface(renderer, size_surf);
             SDL_FreeSurface(size_surf);
             SDL_Rect size_Location;
-            size_Location.x = 700;
+            size_Location.x = 725;
             size_Location.y = fileObjects->at(i).location.y;
             SDL_QueryTexture(size_Texture, NULL, NULL, &(size_Location.w),&(size_Location.h));
             SDL_RenderCopy(renderer, size_Texture, NULL, &size_Location);
+
+            char * permChar = const_cast<char*>(fileObjects->at(i).permission.c_str());
+            SDL_Surface *perm_surf = TTF_RenderText_Solid(fileObjects->at(i).font, permChar, color);
+            SDL_Texture *perm_Texture;
+            perm_Texture = SDL_CreateTextureFromSurface(renderer, perm_surf);
+            SDL_FreeSurface(perm_surf);
+            SDL_Rect perm_Location;
+            perm_Location.x = 600;
+            perm_Location.y = fileObjects->at(i).location.y;
+            SDL_QueryTexture(perm_Texture, NULL, NULL, &(perm_Location.w),&(perm_Location.h));
+            SDL_RenderCopy(renderer, perm_Texture, NULL, &perm_Location);
+
+
         }
 
         SDL_RenderCopy(renderer, fileObjects->at(i).text, NULL, &(fileObjects->at(i).location));
@@ -344,6 +357,96 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     //printf("%s (%ld bytes)\n",files[i].c_str(), file_info.st_size);
                     newFileObject.filesize = file_info.st_size;
+
+
+                    mode_t filePerm = file_info.st_mode;
+                    if (filePerm & S_IRUSR){
+                        newFileObject.permission = newFileObject.permission + "r";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IWUSR){
+                        newFileObject.permission = newFileObject.permission + "w";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IXUSR){
+                        newFileObject.permission = newFileObject.permission + "x";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IRGRP){
+                        newFileObject.permission = newFileObject.permission + "r";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IWGRP){
+                        newFileObject.permission = newFileObject.permission + "w";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IXGRP){
+                        newFileObject.permission = newFileObject.permission + "x";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IROTH){
+                        newFileObject.permission = newFileObject.permission + "r";
+
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IWOTH){
+                        newFileObject.permission = newFileObject.permission + "w";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    if (filePerm & S_IXOTH){
+                        newFileObject.permission = newFileObject.permission + "x";
+                    } else {
+                        newFileObject.permission = newFileObject.permission + "-";
+                    }
+                    /*
+                    struct stat fileattrib;
+                    int fileMode;       
+
+                    printf("-");
+                    fileMode = fileattrib.st_mode;
+                    if ((fileMode & S_IRUSR) && (fileMode & S_IREAD))
+                        printf("r");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IWUSR) && (fileMode & S_IWRITE)) 
+                        printf("w");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IXUSR) && (fileMode & S_IEXEC))
+                        printf("x");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IRGRP) && (fileMode & S_IREAD))
+                        printf("r");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IWGRP) && (fileMode & S_IWRITE))
+                        printf("w");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IXGRP) && (fileMode & S_IEXEC))
+                        printf("x");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IROTH) && (fileMode & S_IREAD))
+                        printf("r");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IWOTH) && (fileMode & S_IWRITE))
+                        printf("w");
+                    else
+                        printf("-");
+                    if ((fileMode & S_IXOTH) && (fileMode & S_IEXEC))
+                        printf("x   ");
+                    */
                 }
 
                 for (int i=0; i < level; i++){
