@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -17,14 +20,16 @@ typedef struct File {
     SDL_Texture *text;
     SDL_Rect location;
     bool isDirectory;
+    bool isExec;
     std::string extension;
     std::string path;
+    std::string permission;
 } File;
 
 void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int offset);
 void initialize(SDL_Renderer *renderer);
 void render(SDL_Renderer *renderer);
-void storeDirectory(std::string dirname, std::vector<File> *fileObjects);
+void storeDirectory(std::string dirname, std::vector<File> *fileObjects,bool isRecursive,int level);
 
 int main(int argc, char **argv)
 {
@@ -48,12 +53,12 @@ int main(int argc, char **argv)
     SDL_WaitEvent(&event);
     std::vector<File> fileObjects;
     std::string currentDir = home;
-    storeDirectory(currentDir,&fileObjects);
-    
+    storeDirectory(home,&fileObjects,false,0);
+
     //Andy, 16 lines of text can fit into the window (save 2 for up and down arrow)
     int offset = 0;
     textRefresh(renderer,&fileObjects, offset);
-
+    bool expand = false;
     while (event.type != SDL_QUIT)
     {
         
@@ -74,12 +79,28 @@ int main(int argc, char **argv)
                     if (offset < fileObjects.size()-16 && fileObjects.size() > 16){
                         offset = offset+1;
                         textRefresh(renderer,&fileObjects, offset);
-                        
                     }
                 }
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:{
+                if (event.button.y >= 564){
+                    if (!expand){
+                        fileObjects.clear();
+                        storeDirectory(currentDir,&fileObjects,true,0);
+                        textRefresh(renderer,&fileObjects, 0);
+                        expand = true;
+                        break;
+                    }
+                    else {
+                        fileObjects.clear();
+                        storeDirectory(currentDir,&fileObjects,false,0);
+                        textRefresh(renderer,&fileObjects, 0);
+                        expand = false;
+                        break;
+                    }
+                    
+                }
                 //printf("mouse: %d, %d\n", event.motion.x,event.motion.y);
                 for (int i=offset; i < fileObjects.size() && i < 16+offset; i++){
                     //std::cout<<fileObjects[i].location.y + fileObjects[i].location.h<<std::endl;
@@ -87,11 +108,23 @@ int main(int argc, char **argv)
                         event.button.y <= fileObjects[i].location.y + fileObjects[i].location.h)
                     {
                         if (fileObjects[i].isDirectory){
-                            currentDir = currentDir + "/" + fileObjects[i].name;
+                            
+                            currentDir = fileObjects[i].path;
                             fileObjects.clear();
-                            storeDirectory(currentDir,&fileObjects);
+                            storeDirectory(currentDir,&fileObjects,false,0);
+                            //std::cout<<fileObjects[i].path<<std::endl;
                             offset = 0;
                             textRefresh(renderer,&fileObjects, offset);
+                        }
+                        else {
+                            //std::cout<<fileObjects[i].extension.compare("png")<<std::endl;
+                            int pid = fork();
+                            if (pid==0){
+                                
+                                char* pathChar = const_cast<char*>(fileObjects[i].path.c_str());
+                                execl("/usr/bin/xdg-open","xdg-open ",pathChar,(char *)0);
+                                exit(1);
+                            }
                         }
                     }
 
@@ -134,6 +167,35 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
         if (fileObjects->at(i).isDirectory){
             icon_Surface = IMG_Load("resrc/images/directory.png");
         }
+        else if (
+                fileObjects->at(i).extension.compare("jpg")==0 ||
+                fileObjects->at(i).extension.compare("jpeg")==0 ||
+                fileObjects->at(i).extension.compare("png")==0 ||
+                fileObjects->at(i).extension.compare("tif")==0 ||
+                fileObjects->at(i).extension.compare("tiff")==0 ||
+                fileObjects->at(i).extension.compare("gif")==0) {
+            icon_Surface = IMG_Load("resrc/images/image.png");
+        }
+        else if (
+                fileObjects->at(i).extension.compare("mp4")==0 ||
+                fileObjects->at(i).extension.compare("mov")==0 ||
+                fileObjects->at(i).extension.compare("mkv")==0 ||
+                fileObjects->at(i).extension.compare("avi")==0 ||
+                fileObjects->at(i).extension.compare("webm")==0) {
+            icon_Surface = IMG_Load("resrc/images/video.png");
+        }
+        else if (
+                fileObjects->at(i).extension.compare("h")==0 ||
+                fileObjects->at(i).extension.compare("c")==0 ||
+                fileObjects->at(i).extension.compare("cpp")==0 ||
+                fileObjects->at(i).extension.compare("py")==0 ||
+                fileObjects->at(i).extension.compare("java")==0 ||
+                fileObjects->at(i).extension.compare("js")==0) {
+            icon_Surface = IMG_Load("resrc/images/code.png");
+        }
+        else if (fileObjects->at(i).isExec){
+            icon_Surface = IMG_Load("resrc/images/executable.png");
+        }
         else {
             icon_Surface = IMG_Load("resrc/images/unknown.png");
         }
@@ -148,6 +210,19 @@ void textRefresh(SDL_Renderer *renderer, std::vector<File> *fileObjects, int off
 
         SDL_RenderCopy(renderer, fileObjects->at(i).text, NULL, &(fileObjects->at(i).location));
         SDL_RenderCopy(renderer, icon_Texture, NULL, &icon_Location);
+
+        SDL_Surface *recur_Surface;
+        recur_Surface = IMG_Load("resrc/images/recursive.png");
+        SDL_Texture *recur_Texture;
+        recur_Texture = SDL_CreateTextureFromSurface(renderer, recur_Surface);
+        SDL_FreeSurface(recur_Surface);
+        SDL_Rect recur_Location;
+        recur_Location.x = 384;
+        recur_Location.y = 568;
+        recur_Location.w = 16;
+        recur_Location.h = 16;
+
+        SDL_RenderCopy(renderer, recur_Texture, NULL, &recur_Location);
 
         SDL_RenderPresent(renderer);
 
@@ -171,7 +246,7 @@ void render(SDL_Renderer *renderer)
     // show rendered frame
     SDL_RenderPresent(renderer);
 }
-void storeDirectory(std::string dirname, std::vector<File> *fileObjects)
+void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool isRecursive, int level)
 {
     struct stat info;
     int err = stat(dirname.c_str(), &info);
@@ -203,17 +278,22 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects)
             {
                 //fprintf(stderr, "Uh oh, shouldn't have gotten here!\n");
             }
-            else if (files[i].compare(".")==0){
+            else if (files[i].compare(".")==0 || (files[i].compare("..")==0 && level > 0)){
                 //do nothing
             }
             else
             {
                 File newFileObject;
                 newFileObject.name = files[i];
+                newFileObject.path = dirname+ "/" + files[i].c_str();
+                //std::cout<<newFileObject.path<<std::endl;
+                char* pathChar = const_cast<char*>(newFileObject.path.c_str());
+                char permissionChar[] = "---------";
+
                 if (S_ISDIR(file_info.st_mode))
                 {
                     newFileObject.isDirectory = true;
-
+                    
                     //printf("%s (directory)\n",files[i].c_str());
                     /*
                     if (files[i] != "." && files[i] != "..")
@@ -225,12 +305,33 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects)
                 }
                 else
                 {
+                    if (access(pathChar,X_OK)){
+                        newFileObject.isExec = true;
+                    }
                     newFileObject.isDirectory = false;
+                    int j = newFileObject.name.rfind('.',newFileObject.name.length());
+                    if (j != std::string::npos){
+                        newFileObject.extension = (newFileObject.name.substr(j+1,newFileObject.name.length()-j));
+                    } 
+                    else {
+                        newFileObject.extension = "";
+                    }
                     //printf("%s (%ld bytes)\n",files[i].c_str(), file_info.st_size);
                 }
-                fileObjects->push_back(newFileObject);
 
+                for (int i=0; i < level; i++){
+                    newFileObject.name = "     " + newFileObject.name;
+                }
+
+                fileObjects->push_back(newFileObject);
                 
+                if (S_ISDIR(file_info.st_mode)&& isRecursive)
+                {
+                    if (files[i] != "..")
+                    {
+                        storeDirectory(newFileObject.path,fileObjects,isRecursive,level+1);
+                    }
+                }
             }
             //printf("%s\n", files[i].c_str());
         }
