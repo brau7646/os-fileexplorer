@@ -90,6 +90,7 @@ int main(int argc, char **argv)
                     event.button.x >= 392 &&
                     event.button.x <= 408){
                     if (!expand){
+                        offset = 0;
                         fileObjects.clear();
                         storeDirectory(currentDir,&fileObjects,true,0);
                         textRefresh(renderer,&fileObjects, 0);
@@ -97,6 +98,7 @@ int main(int argc, char **argv)
                         break;
                     }
                     else {
+                        offset = 0;
                         fileObjects.clear();
                         storeDirectory(currentDir,&fileObjects,false,0);
                         textRefresh(renderer,&fileObjects, 0);
@@ -357,7 +359,7 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     //printf("%s (%ld bytes)\n",files[i].c_str(), file_info.st_size);
                     newFileObject.filesize = file_info.st_size;
-
+                    newFileObject.isExec = false;
 
                     mode_t filePerm = file_info.st_mode;
                     if (filePerm & S_IRUSR){
