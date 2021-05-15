@@ -390,7 +390,6 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     if (filePerm & S_IXGRP){
                         newFileObject.permission = newFileObject.permission + "x";
-                        newFileObject.isExec = true;
                     } else {
                         newFileObject.permission = newFileObject.permission + "-";
                     }
@@ -407,7 +406,6 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     if (filePerm & S_IXOTH){
                         newFileObject.permission = newFileObject.permission + "x";
-                        newFileObject.isExec = true;
                     } else {
                         newFileObject.permission = newFileObject.permission + "-";
                     }
