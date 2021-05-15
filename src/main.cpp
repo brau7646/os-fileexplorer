@@ -347,9 +347,6 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                 }
                 else
                 {
-                    if (access(pathChar,X_OK)){
-                        newFileObject.isExec = true;
-                    }
                     newFileObject.isDirectory = false;
                     int j = newFileObject.name.rfind('.',newFileObject.name.length());
                     if (j != std::string::npos){
@@ -375,6 +372,7 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     if (filePerm & S_IXUSR){
                         newFileObject.permission = newFileObject.permission + "x";
+                        newFileObject.isExec = true;
                     } else {
                         newFileObject.permission = newFileObject.permission + "-";
                     }
@@ -390,6 +388,7 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     if (filePerm & S_IXGRP){
                         newFileObject.permission = newFileObject.permission + "x";
+                        newFileObject.isExec = true;
                     } else {
                         newFileObject.permission = newFileObject.permission + "-";
                     }
@@ -406,6 +405,7 @@ void storeDirectory(std::string dirname, std::vector<File> *fileObjects, bool is
                     }
                     if (filePerm & S_IXOTH){
                         newFileObject.permission = newFileObject.permission + "x";
+                        newFileObject.isExec = true;
                     } else {
                         newFileObject.permission = newFileObject.permission + "-";
                     }
